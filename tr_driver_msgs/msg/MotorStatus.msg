@@ -1,0 +1,17 @@
+int32[2] feedback_vel
+int32[2] feedback_pos
+bool[8] digital_output1
+bool[8] digital_output2
+uint16 status_flag
+bool[8] status1
+bool[8] status2
+bool[9] fault
+uint16 fault_flag
+bool[2] forward_limit
+bool[2] reverse_limit
+bool[2] home_comp
+bool[2] homing
+bool[2] in_home
+bool[2] motor_busy
+int16[2] amps
+uint16 alarm_code

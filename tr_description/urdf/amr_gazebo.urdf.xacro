@@ -1,0 +1,65 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="amr">
+
+    <xacro:arg name="controller_yaml_path" default=""/>
+    <xacro:arg name="lidar_macro_path" default=""/>
+
+    <!-- Include macros -->
+    <xacro:include filename="$(arg lidar_macro_path)" />
+
+    <!-- Properties -->
+    <xacro:property name="lidar_front_update_rate" value="40" />
+    <xacro:property name="lidar_rear_update_rate" value="40" />
+
+    <!--Lidar Sensors-->
+    <xacro:gazebo_lidar_sensor
+        sensor_name="lidar_front_sensor"
+        link_name="lidar_front"
+        update_rate="${lidar_front_update_rate}"
+        min_range="0.10"
+        max_range="30.0"
+        horizontal_samples="720"
+        min_angle="-2.06"
+        max_angle="2.06"
+        noise_mean="0.0"
+        noise_stddev="0.01"
+        topic_name="scan"
+        visualize="false"
+    />
+    <xacro:gazebo_lidar_sensor
+        sensor_name="lidar_rear_sensor"
+        link_name="lidar_rear"
+        update_rate="${lidar_rear_update_rate}"
+        min_range="0.10"
+        max_range="30.0"
+        horizontal_samples="720"
+        min_angle="1.09"
+        max_angle="5.20"
+        noise_mean="0.0"
+        noise_stddev="0.01"
+        topic_name="scan2"
+        visualize="false"
+    />
+
+    <ros2_control name="GazeboSystem" type="system">
+        <hardware>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+        </hardware>
+        <joint name="wheel_left_joint">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="wheel_right_joint">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+    </ros2_control>
+
+    <gazebo>
+        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+            <parameters>$(arg controller_yaml_path)</parameters>
+        </plugin>
+    </gazebo>
+
+</robot>
