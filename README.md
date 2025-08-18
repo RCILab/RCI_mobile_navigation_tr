@@ -88,18 +88,6 @@ ros2 launch tr_real bringup_real.launch.py
    ros2 launch tr_real tr_navigation2.launch.py map_name:='<map_name>'
    ```
 
-## Citation
-If you use this code in your research, please cite:
-
-```bibtex
-@inproceedings{kim2025mpc,
-  title     = {MPC-based Whole-Body Control for Humanoid Robots},
-  author    = {Kim, Sanghyun and Others},
-  booktitle = {IEEE International Conference on Robotics and Automation (ICRA)},
-  year      = {2025}
-}
-```
-
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
