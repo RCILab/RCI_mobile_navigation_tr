@@ -1,0 +1,3 @@
+int32[2] target_pos
+---
+bool success

@@ -1,0 +1,10 @@
+tr_differential_node:
+  ros__parameters:
+    joint_trajectory_topic: "joint_trajectory_controller/joint_trajectory"
+    joint_states_topic: "joint_states"
+
+    #robot's geometric parameters:
+    wheelDiameter: 0.15
+    wheelSeperation: 0.48
+    odomFrame: "odom"
+    robotBaseFrame: "base_footprint"

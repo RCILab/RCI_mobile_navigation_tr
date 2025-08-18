@@ -1,0 +1,34 @@
+ekf_localization:
+  ros__parameters:
+    # GENERAL SETTINGS
+    frequency: 50.0
+    two_d_mode: true
+    predict_to_current_time: true
+    
+    # FRAME PARAMETERS
+    map_frame: map
+    odom_frame: odom          # EKF가 발행할 좌표계. 최종 odom.
+    base_link_frame: base_link
+    world_frame: odom         # map_frame이 있다면 map으로, 없다면 odom으로 설정.
+
+    # ODOMETRY INPUT (from Kinematics)
+    odom0: /odom1
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,  # vx, vy velocity
+                   false, false, true,   # yaw velocity
+                   false, false, false]
+    odom0_differential: false
+    odom0_queue_size: 10
+
+    # IMU INPUT (from IMU sensor)
+    # IMU 필터링을 거친 /imu/data 토픽을 사용하도록 설정합니다. (아래 2번 항목 참고)
+    imu0: /raw_imu
+    imu0_config: [false, false, false,
+                  true,  true,  true,   # roll, pitch, yaw orientation
+                  false, false, false,
+                  true,  true,  true,   # roll, pitch, yaw angular velocity
+                  false, false, false]
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true # IMU의 중력 가속도 제거
+    imu0_queue_size: 10

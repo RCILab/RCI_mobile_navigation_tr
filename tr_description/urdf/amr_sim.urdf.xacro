@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!-- This is the main URDF file for amr-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="amr">
+
+    <!--set use_gazebo = false for implementation on real robot-->
+    <xacro:arg name="use_gazebo" default="true"/>
+
+    <!-- import main body description -->
+    <xacro:include filename="amr_body.urdf.xacro"/>
+
+    <!-- If Simulation is used -->
+    <xacro:if value="$(arg use_gazebo)">
+        <xacro:include filename="amr_gazebo.urdf.xacro"/>
+    </xacro:if>
+</robot>

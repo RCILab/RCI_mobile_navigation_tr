@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot name="amr">
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="0.837 0.587 0.016"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+        </visual>
+    </link>
+
+    <link name="base_footprint"/>
+    <link name="scan1"/>
+    <link name="scan2"/>
+    <link name="imu_link"/>
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="scan1_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="scan1"/>
+        <origin xyz="0.350 0.225 0.0505" rpy="0.0 0.0 0.785398"/>
+    </joint>
+
+    <joint name="scan2_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="scan2"/>
+        <origin xyz="-0.350 -0.225 0.0505" rpy="0.0 0.0 3.92699"/>
+    </joint>
+
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="0.189 -0.041 0.094" rpy="0 0 0"/>
+    </joint>
+</robot>
