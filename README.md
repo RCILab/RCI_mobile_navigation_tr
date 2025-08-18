@@ -3,7 +3,7 @@
 This repository contains the official ROS 2 software stack for the Autonomous Mobile Robot (AMR) platform developed by T-Robotics.
 
 ## Overview
-This repository contains ROS 2 packages for implementing autonomous navigation and control on the AMR platform developed by T-Robotics.
+This repository contains ROS 2 packages for implementing autonomous navigation and control on the AMR platform developed by T-Robotics.  
 This work was conducted as part of the T-Robotics Industry-University Cooperation Project.
 
 ## Dependencies
