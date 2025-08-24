@@ -31,14 +31,11 @@ sudo apt-get update && sudo apt-get install -y \
     ros-humble-controller-manager \
     ros-humble-gazebo-ros \
     ros-humble-gazebo-ros2-control \
+    ros-humble-gazebo-plugins
     ros-humble-xacro \
     ros-humble-diagnostic-updater \
     ros-humble-sick-safetyscanners2 \
-    python3-pytest \
-    python3-colcon-common-extensions \
-    libboost-dev \
-    nlohmann-json3-dev \
-    libserial-dev
+    ros-humble-robot-localization
 ```
 - Lely CANopen:
 ```bash
@@ -55,7 +52,8 @@ sudo apt install -y \
     python3-colcon-common-extensions \
     libboost-dev \
     nlohmann-json3-dev \
-    libserial-dev
+    libserial-dev \
+    xterm
 ```
 
 ## Installation
