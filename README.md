@@ -31,7 +31,7 @@ sudo apt-get update && sudo apt-get install -y \
     ros-humble-controller-manager \
     ros-humble-gazebo-ros \
     ros-humble-gazebo-ros2-control \
-    ros-humble-gazebo-plugins
+    ros-humble-gazebo-plugins \
     ros-humble-xacro \
     ros-humble-diagnostic-updater \
     ros-humble-sick-safetyscanners2 \
@@ -41,7 +41,7 @@ sudo apt-get update && sudo apt-get install -y \
 ```bash
 sudo add-apt-repository ppa:lely/ppa
 sudo apt-get update
-sudo apt-get install liblely-coapp-dev liblely-co-tools python3-dcf-tools
+sudo apt-get install -y liblely-coapp-dev liblely-co-tools python3-dcf-tools
 sudo apt-get install pkg-config
 sudo apt-get install can-utils
 ```
