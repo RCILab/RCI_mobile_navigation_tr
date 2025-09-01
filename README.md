@@ -12,24 +12,9 @@ This work was conducted as part of the T-Robotics Industry-University Cooperatio
 ```bash
 sudo apt-get update && sudo apt-get install -y \
     ros-humble-rclcpp \
-    ros-humble-rclcpp-action \
-    ros-humble-rclcpp-lifecycle \
-    ros-humble-rclcpp-components \
-    ros-humble-geometry-msgs \
-    ros-humble-sensor-msgs \
-    ros-humble-nav-msgs \
-    ros-humble-trajectory-msgs \
-    ros-humble-visualization-msgs \
-    ros-humble-tf2-ros \
-    ros-humble-tf2-geometry-msgs \
     ros-humble-navigation2 \
-    ros-humble-nav2-common \
     ros-humble-slam-toolbox \
     ros-humble-robot-state-publisher \
-    ros-humble-ros2-control \
-    ros-humble-ros2-controllers \
-    ros-humble-controller-manager \
-    ros-humble-gazebo-ros \
     ros-humble-gazebo-ros2-control \
     ros-humble-gazebo-plugins \
     ros-humble-xacro \
@@ -65,15 +50,11 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-## Usage
-```bash
-ros2 launch tr_real bringup_real.launch.py
-```
-
 ## Examples
-1. **Simulation** – Gazebo simulation with the AMR
+### Real-world
+1. **Bringup**
    ```bash
-   ros2 launch tr_sim simulation.launch.py
+   ros2 launch tr_real bringup_real.launch.py
    ```
 2. **Mapping**
    ```bash
@@ -84,6 +65,21 @@ ros2 launch tr_real bringup_real.launch.py
 3. **Navigation**
    ```bash
    ros2 launch tr_real tr_navigation2.launch.py map_name:='<map_name>'
+   ```
+### Simulation
+1. **Bringup**
+   ```bash
+   ros2 launch tr_sim simulation.launch.py
+   ```
+2. **Mapping**
+   ```bash
+   ros2 launch tr_nav2_bringup mapping.launch.py
+   ros2 launch tr_nav2_bringup rviz_launch.py
+   ros2 run nav2_map_server map_saver_cli -f ~/tr_ws/src/tr_sim/maps/<map_name>
+   ```
+3. **Navigation**
+   ```bash
+   ros2 launch tr_sim tr_navigation2.launch.py map_name:='<map_name>'
    ```
 
 ## License
