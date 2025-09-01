@@ -26,13 +26,7 @@ def generate_launch_description():
     map_name = LaunchConfiguration('map_name')
 
     map_dir = [
-        os.path.join(
-            get_package_share_directory('tr_real'),
-            'maps',
-            ''
-        ),
-        map_name,
-        '.yaml'
+        os.path.join(get_package_share_directory('tr_real'), 'maps', ''), map_name, '.yaml'
     ]
 
     use_multi_robots = LaunchConfiguration('use_multi_robots', default='False')
@@ -76,5 +70,6 @@ def generate_launch_description():
             PythonLaunchDescriptionSource([real_launch_file_dir, '/speed_limit.launch.py']),
             condition=IfCondition(use_speed_zone),
             launch_arguments={'namespace': namespace,
+                              'map_name': map_name,
                               'use_sim_time': use_sim_time}.items()),
     ])

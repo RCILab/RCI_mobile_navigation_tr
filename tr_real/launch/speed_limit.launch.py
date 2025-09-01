@@ -30,22 +30,23 @@ from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
-    # Get the launch directory
-    tr_real_dir = get_package_share_directory('tr_real')
-    lifecycle_nodes = ['filter_mask_server', 'costmap_filter_info_server']
-
-    default_params_file = os.path.join(tr_real_dir, 'configs', 'speed_params.yaml')
-    default_mask_file = os.path.join(tr_real_dir, 'maps', 'speed_mask.yaml')
-
     # Parameters
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
+    map_name = LaunchConfiguration('map_name')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('speed_params_file')
     mask_yaml_file = LaunchConfiguration('mask')
     use_composition = LaunchConfiguration('use_composition')
     container_name = LaunchConfiguration('container_name')
     container_name_full = (namespace, '/', container_name)
+
+    # Get the launch directory
+    tr_real_dir = get_package_share_directory('tr_real')
+    lifecycle_nodes = ['filter_mask_server', 'costmap_filter_info_server']
+
+    default_params_file = os.path.join(tr_real_dir, 'configs', 'speed_params.yaml')
+    default_mask_file =  [os.path.join(tr_real_dir, 'maps', ''), map_name, '_sm', '.yaml'] # sm: speed mask
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(

@@ -1,4 +1,4 @@
-image: speed_mask.pgm
+image: fac_final_sm.pgm
 mode: scale
 resolution: 0.02
 origin: [-15, -17.6, 0]

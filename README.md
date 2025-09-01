@@ -50,38 +50,60 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-## Examples
+## Usage
 ### Real-world
-1. **Bringup**
+1. Bringup
    ```bash
    ros2 launch tr_real bringup_real.launch.py
    ```
-2. **Mapping**
+2. Mapping
    ```bash
    ros2 launch tr_nav2_bringup mapping.launch.py
    ros2 launch tr_nav2_bringup rviz_launch.py
    ros2 run nav2_map_server map_saver_cli -f ~/tr_ws/src/tr_real/maps/<map_name>
    ```
-3. **Navigation**
+3. Navigation
    ```bash
    ros2 launch tr_real tr_navigation2.launch.py map_name:='<map_name>'
    ```
-### Simulation
-1. **Bringup**
+   Note on Speed Filter (Speed Zones):
+   - The speed mask filename must end with the `_sm` suffix (e.g., `<map_name>_sm.pgm`).
+   - To disable the speed filter, set the `use_speed_zone` parameter to `False`:
    ```bash
-   ros2 launch tr_sim simulation.launch.py
+   ros2 launch tr_real tr_navigation2.launch.py map_name:='<map_name>' use_speed_zone:='False'
+### Simulation
+1. Bringup
+   ```bash
+   ros2 launch tr_sim simulation.launch.py world:='<world_name>'
    ```
-2. **Mapping**
+2. Mapping
    ```bash
    ros2 launch tr_nav2_bringup mapping.launch.py
    ros2 launch tr_nav2_bringup rviz_launch.py
    ros2 run nav2_map_server map_saver_cli -f ~/tr_ws/src/tr_sim/maps/<map_name>
    ```
-3. **Navigation**
+3. Navigation
    ```bash
    ros2 launch tr_sim tr_navigation2.launch.py map_name:='<map_name>'
    ```
-
+   Note on Speed Filter (Speed Zones):
+   - The speed mask filename must end with the `_sm` suffix (e.g., `<map_name>_sm.pgm`).
+   - To disable the speed filter, set the `use_speed_zone` parameter to `False`:
+   ```bash
+   ros2 launch tr_sim tr_navigation2.launch.py map_name:='<map_name>' use_speed_zone:='False'
+## Examples
+### Real-world
+- Two-Way Waypoint Navigation
+  ```bash
+   cd ~/ros2_ws/src/RCI_mobile_navigation_tr/tr_real/test
+   python3 test.py
+  ```
+### Simulation
+- Two-Way Waypoint Navigation
+  ```bash
+   cd ~/ros2_ws/src/RCI_mobile_navigation_tr/tr_sim/test
+   python3 test.py
+  ```
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

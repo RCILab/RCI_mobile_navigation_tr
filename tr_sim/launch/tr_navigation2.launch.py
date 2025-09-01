@@ -19,13 +19,12 @@ def generate_launch_description():
 
     declare_map_name_arg = DeclareLaunchArgument(
         'map_name',
-        default_value='warehouse',
+        default_value='test',
         description='Name of the map file in tr_real/maps directory (without .yaml extension)'
     )
 
-    map_name = LaunchConfiguration('map_name')
-
     use_speed_zone = LaunchConfiguration('use_speed_zone')
+    map_name = LaunchConfiguration('map_name')
 
     map_dir = [
         os.path.join(get_package_share_directory('tr_sim'), 'maps', ''), map_name, '.yaml'
