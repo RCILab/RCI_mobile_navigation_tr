@@ -96,15 +96,8 @@ def generate_launch_description():
         condition=IfCondition(AndSubstitution(autostart, NotSubstitution(use_lifecycle_manager)))
     )
 
-    integrate_lidar = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(integrate_lidar_dir, 'launch', 'integrate_2_scan.launch.py')
-        )
-    )
-
     ld = LaunchDescription()
 
-    ld.add_action(integrate_lidar)
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_use_lifecycle_manager)
     ld.add_action(declare_use_sim_time_argument)

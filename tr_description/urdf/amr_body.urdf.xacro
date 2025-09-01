@@ -64,13 +64,13 @@
             <inertia ixx="0.005806550370805789" iyy="0.005598361277714625" izz="0.006586524732465127" ixy="1.0334164918979528e-05" iyz="2.945849772183217e-06" ixz="-1.4112960063789037e-07" />
         </inertial>
         <visual name="lidar_front_visual">
-            <origin xyz="0.0 0.0 0.04" rpy="3.1416 -0.0 0.0" />
+            <origin xyz="0.0 0.0 0.04" rpy="3.1416 0.0 0.0" />
             <geometry>
                 <mesh filename="package://tr_description/meshes/lidar_front.stl" scale="0.001 0.001 0.001" />
             </geometry>
         </visual>
         <collision name="lidar_front_collision">
-            <origin xyz="0.0 0.0 0.04" rpy="3.1416 -0.0 0.0" />
+            <origin xyz="0.0 0.0 0.04" rpy="3.1416 0.0 0.0" />
             <geometry>
                 <mesh filename="package://tr_description/meshes/lidar_front.stl" scale="0.001 0.001 0.001" />
             </geometry>
@@ -78,7 +78,7 @@
     </link>
 
     <joint name="lidar_front_joint" type="fixed">
-        <origin xyz="0.352 0.226 0.04" rpy="3.1416 0.0 0.7854" />
+        <origin xyz="0.352 0.226 0.04" rpy="0.0 0.0 0.7854" />
         <parent link="base_link" />
         <child link="lidar_front" />
     </joint>
@@ -104,9 +104,17 @@
     </link>
 
     <joint name="lidar_rear_joint" type="fixed">
-        <origin xyz="-0.352 -0.226 0.04" rpy="3.1416 -0.0 0.7854" />
+        <origin xyz="-0.352 -0.226 0.04" rpy="0.0 0.0 0.7854" />
         <parent link="base_link" />
         <child link="lidar_rear" />
+    </joint>
+
+    <link name="imu_link"/>
+
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="0.189 -0.041 0.094" rpy="0 0 0"/>
     </joint>
 
     <link name="wheel_bogie_right">
@@ -192,16 +200,6 @@
         <child link="wheel_left" />
         <axis xyz="0.0 0.0 -1.0" />
     </joint>
-    <transmission name="wheel_left_joint_transmission">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="wheel_left_joint">
-            <hardwareInterface>VelocityJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="wheel_left_joint_motor">
-            <hardwareInterface>VelocityJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
 
     <link name="wheel_right">
         <inertial>
@@ -230,16 +228,6 @@
         <child link="wheel_right" />
         <axis xyz="0.0 0.0 1.0" />
     </joint>
-    <transmission name="wheel_right_joint_transmission">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="wheel_right_joint">
-            <hardwareInterface>VelocityJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="wheel_right_joint_motor">
-            <hardwareInterface>VelocityJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
 
     <link name="caster_fork_front_left">
         <inertial>

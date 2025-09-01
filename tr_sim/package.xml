@@ -3,9 +3,9 @@
 <package format="3">
   <name>tr_sim</name>
   <version>0.0.0</version>
-  <description>gazebo simulation for T-Robotics AMR</description>
-  <maintainer email="doumpork@khu.ac.kr">Daum Park</maintainer>
-  <license>MIT</license>
+  <description>TODO: Package description</description>
+  <maintainer email="doumpork@khu.ac.kr">daumpark</maintainer>
+  <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

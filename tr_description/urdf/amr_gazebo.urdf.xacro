@@ -22,7 +22,7 @@
         max_angle="2.06"
         noise_mean="0.0"
         noise_stddev="0.01"
-        topic_name="scan"
+        topic_name="scan1"
         visualize="false"
     />
     <xacro:gazebo_lidar_sensor
@@ -62,4 +62,106 @@
         </plugin>
     </gazebo>
 
+    <gazebo reference="imu_link">
+        <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>false</visualize>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="gazebo_ros_imu_sensor">
+                <namespace>/</namespace>
+                <topic_name>raw_imu</topic_name> <frame_name>imu_link</frame_name>
+                <initial_orientation_as_reference>false</initial_orientation_as_reference>
+            </plugin>
+            <imu>
+                <angular_velocity>
+                    <x>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.0000075</bias_mean>
+                            <bias_stddev>0.0000008</bias_stddev>
+                        </noise>
+                    </x>
+                    <y>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.0000075</bias_mean>
+                            <bias_stddev>0.0000008</bias_stddev>
+                        </noise>
+                    </y>
+                    <z>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.0000075</bias_mean>
+                            <bias_stddev>0.0000008</bias_stddev>
+                        </noise>
+                    </z>
+                </angular_velocity>
+                <linear_acceleration>
+                    <x>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.1</bias_mean>
+                            <bias_stddev>0.001</bias_stddev>
+                        </noise>
+                    </x>
+                    <y>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.1</bias_mean>
+                            <bias_stddev>0.001</bias_stddev>
+                        </noise>
+                    </y>
+                    <z>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.1</bias_mean>
+                            <bias_stddev>0.001</bias_stddev>
+                        </noise>
+                    </z>
+                </linear_acceleration>
+            </imu>
+        </sensor>
+    </gazebo>
+
+    <gazebo reference="caster_wheel_front_left">
+        <mu1>0.01</mu1>
+        <mu2>0.01</mu2>
+        <kp>1000000.0</kp>
+        <kd>100.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+    </gazebo>
+
+        <gazebo reference="caster_wheel_front_right">
+        <mu1>0.01</mu1>
+        <mu2>0.01</mu2>
+        <kp>1000000.0</kp>
+        <kd>100.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+    </gazebo>
+
+    <gazebo reference="caster_wheel_rear_left">
+        <mu1>0.01</mu1>
+        <mu2>0.01</mu2>
+        <kp>1000000.0</kp>
+        <kd>100.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+    </gazebo>
+
+    <gazebo reference="caster_wheel_rear_right">
+        <mu1>0.01</mu1>
+        <mu2>0.01</mu2>
+        <kp>1000000.0</kp>
+        <kd>100.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+    </gazebo>
 </robot>

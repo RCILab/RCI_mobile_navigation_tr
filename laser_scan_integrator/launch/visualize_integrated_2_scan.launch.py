@@ -20,6 +20,7 @@ def generate_launch_description():
     #general parameter for the integrated laserscan
     pointCloudTopic = LaunchConfiguration('integratedTopic', default="scan_integrated")
     pointCloutFrameId = LaunchConfiguration('integratedFrameId', default="base_link")
+    use_sim_time = LaunchConfiguration('use_sim_time', default=False)
     
     #parameter for the first laserscan, feel free to duplicate and rename for other laserscans
     scanTopic1 = LaunchConfiguration('scanTopic1', default="scan1")
@@ -52,7 +53,11 @@ def generate_launch_description():
             default_value=pointCloutFrameId,
             description='desc',
         ),
-
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value=use_sim_time,
+            description='desc',
+        ),
         DeclareLaunchArgument(
             'scanTopic1',
             default_value=scanTopic1,
@@ -132,6 +137,7 @@ def generate_launch_description():
             parameters=[{
                 'integratedTopic' : pointCloudTopic,
                 'integratedFrameId' : pointCloutFrameId,
+                'use_sim_time' : use_sim_time,
                 'scanTopic1' : scanTopic1,
                 'laser1XOff' : laser1XOff,
                 'laser1YOff' : laser1YOff,

@@ -2,6 +2,7 @@
 //   created by: Michael Jonathan (mich1342)
 //   github.com/mich1342
 //   24/2/2022
+//   Modified for robust use_sim_time handling
 //
 
 #include <rclcpp/rclcpp.hpp>
@@ -15,13 +16,13 @@
 #include <tf2_ros/create_timer_ros.h>
 
 #include <cmath>
-
 #include <string>
 #include <vector>
 #include <array>
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <limits> // Required for std::numeric_limits
 
 struct LaserPoint
 {
@@ -39,16 +40,16 @@ struct LaserPointLess
 class scanMerger : public rclcpp::Node
 {
     public:
-    scanMerger()
-    : Node("ros2_laser_scan_merger")
+    // 생성자에 rclcpp::NodeOptions 추가
+    scanMerger(const rclcpp::NodeOptions & options)
+    : Node("ros2_laser_scan_merger", options)
     {
         tolerance_ = this->declare_parameter("transform_tolerance", 0.01);
-        
-        initialize_params();
+
         refresh_params();
         
         
-        auto default_qos = rclcpp::SensorDataQoS(); //rclcpp::QoS(rclcpp::SystemDefaultsQoS());
+        auto default_qos = rclcpp::SensorDataQoS();
         sub1_ = this->create_subscription<sensor_msgs::msg::LaserScan>(topic1_, default_qos, std::bind(&scanMerger::scan_callback1, this, std::placeholders::_1));
         sub2_ = this->create_subscription<sensor_msgs::msg::LaserScan>(topic2_, default_qos, std::bind(&scanMerger::scan_callback2 , this, std::placeholders::_1));
         
@@ -61,6 +62,7 @@ class scanMerger : public rclcpp::Node
         tf2_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf2_);
        
     }
+
     private:
     void scan_callback1(const sensor_msgs::msg::LaserScan::SharedPtr _msg) {
         laser1_ = _msg;
@@ -69,154 +71,124 @@ class scanMerger : public rclcpp::Node
           update_point_cloud_rgb();
         }
     }
+
     void scan_callback2(const sensor_msgs::msg::LaserScan::SharedPtr _msg) {
         laser2_ = _msg;
     }
     
     void update_point_cloud_rgb(){
         refresh_params();
-        trans1_ = tf2_->lookupTransform(integratedFrameId_, laser1_->header.frame_id, rclcpp::Time(0));
-        trans2_ = tf2_->lookupTransform(integratedFrameId_, laser2_->header.frame_id, rclcpp::Time(0));
+
+        // lookupTransform 호출 방식 변경: rclcpp::Time(0) 대신 메시지의 타임스탬프를 사용
+        try {
+            trans1_ = tf2_->lookupTransform(integratedFrameId_, laser1_->header.frame_id, laser1_->header.stamp, tf2::durationFromSec(tolerance_));
+            trans2_ = tf2_->lookupTransform(integratedFrameId_, laser2_->header.frame_id, laser2_->header.stamp, tf2::durationFromSec(tolerance_));
+        } catch (const tf2::TransformException & ex) {
+            RCLCPP_WARN(this->get_logger(), "Could not transform %s or %s to %s: %s",
+                laser1_->header.frame_id.c_str(),
+                laser2_->header.frame_id.c_str(),
+                integratedFrameId_.c_str(),
+                ex.what());
+            return;
+        }
+
         double sensor1_r, sensor1_p, sensor1_y, sensor2_r, sensor2_p, sensor2_y;
-        // sensor1_y = 0.0;
-        // sensor2_y = 0.0;
         geometry_quat_to_rpy(&sensor1_r, &sensor1_p, &sensor1_y, trans1_.transform.rotation);
         geometry_quat_to_rpy(&sensor2_r, &sensor2_p, &sensor2_y, trans2_.transform.rotation);
         sensor1_y += laser1Yaw_;
         sensor2_y += laser2Yaw_;
         std::vector<std::array<float,2>> scan_data;
         int count = 0;
-        float min_theta = 100000;
-        float max_theta = -100000;
+        
         if(show1_){
-        //if(false){
-            for (float i = laser1_->angle_min; i <= laser1_->angle_max; i += laser1_->angle_increment){
+            for (size_t i = 0; i < laser1_->ranges.size(); ++i){
+                float current_angle = laser1_->angle_min + i * laser1_->angle_increment;
                 std::array<float, 2> pt;
                 float laser_angle;
-                if (fabs(sensor1_r) < M_PI/2)
-                {
-                    laser_angle = i;
+
+                if (fabs(sensor1_r) < M_PI/2) {
+                    laser_angle = current_angle;
+                } else {
+                    laser_angle = -current_angle;
                 }
-                else
-                {
-                    laser_angle = -i;
-                }
-                float temp_x = laser1_->ranges[count] * std::cos(laser_angle) ;
-                float temp_y = laser1_->ranges[count] * std::sin(laser_angle) ;
+
+                float temp_x = laser1_->ranges[i] * std::cos(laser_angle);
+                float temp_y = laser1_->ranges[i] * std::sin(laser_angle);
                 pt[0] = temp_x * std::cos(sensor1_y) - temp_y * std::sin(sensor1_y);
                 pt[0] += trans1_.transform.translation.x + laser1XOff_;
                 pt[1] = temp_x * std::sin(sensor1_y) + temp_y * std::cos(sensor1_y);
                 pt[1] += trans1_.transform.translation.y + laser1YOff_;
-                count++;
-                if (pt[0] < robotFrontEnd_ && pt[0] > -robotRearEnd_ && pt[1] < robotLeftEnd_ && pt[1] > -robotRightEnd_)
-                {
+
+                if (pt[0] < robotFrontEnd_ && pt[0] > -robotRearEnd_ && pt[1] < robotLeftEnd_ && pt[1] > -robotRightEnd_) {
                     continue;
                 }
-                float r_ = GET_R(pt[0], pt[1]);
-                float theta_ = GET_THETA(pt[0], pt[1]);
+                
                 std::array<float,2> res_;
-                res_[1] = r_;
-                res_[0] = theta_;
+                res_[1] = GET_R(pt[0], pt[1]); // distance
+                res_[0] = GET_THETA(pt[0], pt[1]); // angle
                 scan_data.push_back(res_);
-                if(theta_ < min_theta){
-                    min_theta = theta_;
-                }
-                if(theta_ > max_theta){
-                    max_theta = theta_;
-                }
             }
         }
-        count = 0;
+
         if(show2_){
-            for (float i = laser2_->angle_min; i <= laser2_->angle_max; i += laser2_->angle_increment){
+            for (size_t i = 0; i < laser2_->ranges.size(); ++i){
+                float current_angle = laser2_->angle_min + i * laser2_->angle_increment;
                 std::array<float,2> pt;
                 float laser_angle;
-                if (fabs(sensor2_r) < M_PI/2)
-                {
-                    laser_angle = i;
+
+                if (fabs(sensor2_r) < M_PI/2) {
+                    laser_angle = current_angle;
+                } else {
+                    laser_angle = -current_angle;
                 }
-                else
-                {
-                    laser_angle = -i;
-                }
-                float temp_x = laser2_->ranges[count] * std::cos(laser_angle) ;
-                float temp_y = laser2_->ranges[count] * std::sin(laser_angle) ;
+
+                float temp_x = laser2_->ranges[i] * std::cos(laser_angle);
+                float temp_y = laser2_->ranges[i] * std::sin(laser_angle);
                 pt[0] = temp_x * std::cos(sensor2_y) - temp_y * std::sin(sensor2_y);
                 pt[0] += trans2_.transform.translation.x + laser2XOff_;
                 pt[1] = temp_x * std::sin(sensor2_y) + temp_y * std::cos(sensor2_y);
                 pt[1] += trans2_.transform.translation.y + laser2YOff_;
-                count++;
-                if (pt[0] < robotFrontEnd_ && pt[0] > -robotRearEnd_ && pt[1] < robotLeftEnd_ && pt[1] > -robotRightEnd_)
-                {
+                
+                if (pt[0] < robotFrontEnd_ && pt[0] > -robotRearEnd_ && pt[1] < robotLeftEnd_ && pt[1] > -robotRightEnd_) {
                     continue;
                 }
-                float r_ = GET_R(pt[0], pt[1]);
-                float theta_ = GET_THETA(pt[0], pt[1]);
+
                 std::array<float,2> res_;
-                res_[1] = r_;
-                res_[0] = theta_;
+                res_[1] = GET_R(pt[0], pt[1]); // distance
+                res_[0] = GET_THETA(pt[0], pt[1]); // angle
                 scan_data.push_back(res_);
-                if(theta_ < min_theta){
-                    min_theta = theta_;
-                }
-                if(theta_ > max_theta){
-                    max_theta = theta_;
-                }
             }
         }
-        std::sort(scan_data.begin(), scan_data.end(), [](std::array<float,2> a, std::array<float,2> b) {
-            return a[0] < b[0];
-        });
 
-        
         // 통합 스캔 메시지 준비
-        auto integrated_msg_ = std::make_shared<sensor_msgs::msg::LaserScan>();
+        auto integrated_msg_ = std::make_unique<sensor_msgs::msg::LaserScan>();
         integrated_msg_->header.frame_id = integratedFrameId_;
-        integrated_msg_->header.stamp    = laser1_->header.stamp;
-        // 통합 각도 해상도(두 라이다가 동일하다 했으니 그대로 사용)
+        integrated_msg_->header.stamp    = this->now(); // 현재 시간(sim time or system time) 사용
+
+        // 두 라이다가 동일한 해상도를 가진다고 가정
         const float inc = laser1_->angle_increment;
-        // min/max를 격자에 스냅(선택사항이지만 깔끔)
-        const float snapped_min = std::floor(min_theta / inc) * inc;
-        const float snapped_max = std::ceil (max_theta / inc) * inc;
-        // bin 개수 산출
-        int n_bins = static_cast<int>(std::floor((snapped_max - snapped_min) / inc)) + 1;
+        const float snapped_min = -M_PI;
+        int n_bins = static_cast<int>(std::floor((2*M_PI) / inc)) + 1;
+
         if (n_bins <= 0 || scan_data.empty()) {
-            // 데이터가 없으면 그냥 빈 메시지 퍼블리시(필요 시 early return)
-            integrated_msg_->angle_min = 0.0f;
-            integrated_msg_->angle_max = 0.0f;
-            integrated_msg_->angle_increment = inc;
-            integrated_msg_->time_increment  = laser1_->time_increment;
-            integrated_msg_->scan_time       = laser1_->scan_time;
-            integrated_msg_->range_min       = laser1_->range_min;
-            integrated_msg_->range_max       = laser1_->range_max;
-            // integrated_msg_->ranges.clear();
-
-
-            // n_bins가 0보다 클 경우에만 inf로 채운 배열을 발행
-            if (n_bins > 0) {
-                integrated_msg_->ranges.resize(n_bins, std::numeric_limits<float>::infinity());
-            } else {
-                integrated_msg_->ranges.clear(); // n_bins가 0일 경우, 빈 배열을 발행
-            }
-            
-            laser_scan_pub_->publish(*integrated_msg_);
+            RCLCPP_DEBUG(this->get_logger(), "No valid scan data to publish.");
             return;
         }
 
-
         // 모든 bin을 inf로 초기화
         std::vector<float> ranges(n_bins, std::numeric_limits<float>::infinity());
-        // 각 포인트를 가장 가까운 bin으로 매핑하여 최소 r 기록
+        
+        // 각 포인트를 가장 가까운 bin으로 매핑하여 최소 거리 기록
         for (const auto& a : scan_data) {
             const float theta = a[0];
             const float r     = a[1];
-            // 유효성/범위 체크(권장)
+
             if (!std::isfinite(theta) || !std::isfinite(r)) continue;
             if (r < laser1_->range_min || r > laser1_->range_max) continue;
-            // 가장 가까운 bin index
+
             int idx = static_cast<int>(std::round((theta - snapped_min) / inc));
             if (0 <= idx && idx < n_bins) {
-                if (r < ranges[idx]) ranges[idx] = r;  // 같은 bin엔 더 가까운 값 유지
+                if (r < ranges[idx]) ranges[idx] = r;  // 같은 bin에는 더 가까운 값 유지
             }
         }
 
@@ -229,95 +201,50 @@ class scanMerger : public rclcpp::Node
         integrated_msg_->range_max       = laser1_->range_max;
         integrated_msg_->ranges          = std::move(ranges);
         
-        // size_t i = 1;
-        // std::vector<float>temp_range;
-        // for (float angle = min_theta; angle < max_theta; angle += laser1_->angle_increment)
-        // {
-        //     while (scan_data[i][0] < angle)
-        //     {
-        //         i++;
-        //     }
-        //     if (fabs(scan_data[i][1] - scan_data[i-1][1]) < 0.2f
-        //         && (fabs(scan_data[i][0] - angle) < laser1_->angle_increment 
-        //         || fabs(scan_data[i-1][0] - angle) < laser1_->angle_increment)
-        //        )
-        //     {
-        //             float range = interpolate(scan_data[i-1][0], scan_data[i][0], scan_data[i-1][1], scan_data[i][1], angle);
-        //         temp_range.push_back(range);
-        //     }
-        //     else
-        //     {
-        //         temp_range.push_back(std::numeric_limits<float>::infinity());
-        //     }
-        // }
-
-
-        laser_scan_pub_->publish(*integrated_msg_);
-
+        laser_scan_pub_->publish(std::move(integrated_msg_));
     }
+
     float GET_R(float x, float y){
         return sqrt(x*x + y*y);
     }
+
     float GET_THETA(float x, float y){
         return atan2(y, x);
     }
+
     float interpolate(float angle_1, float angle_2, float magnitude_1, float magnitude_2, float current_angle){
-        
         return (magnitude_1 + (current_angle - angle_1) * ((magnitude_2 - magnitude_1)/(angle_2 - angle_1)));
     }
+
     void geometry_quat_to_rpy(double* roll, double* pitch, double* yaw, geometry_msgs::msg::Quaternion geometry_quat){
         tf2::Quaternion quat;
         tf2::convert(geometry_quat, quat);
-        tf2::Matrix3x3(quat).getRPY(*roll, *pitch, *yaw);  //rpy are Pass by Reference
+        tf2::Matrix3x3(quat).getRPY(*roll, *pitch, *yaw);
     }
-    void initialize_params(){
-        
-        this->declare_parameter<std::string>("integratedTopic");
-        this->declare_parameter<std::string>("integratedFrameId");
 
-        this->declare_parameter<std::string>("scanTopic1");
-        this->declare_parameter<float>("laser1XOff");
-        this->declare_parameter<float>("laser1YOff");
-        this->declare_parameter<float>("laser1Yaw");
-        this->declare_parameter<bool>("show1");
-
-        this->declare_parameter<std::string>("scanTopic2");
-        this->declare_parameter<float>("laser2XOff");
-        this->declare_parameter<float>("laser2YOff");
-        this->declare_parameter<float>("laser2Yaw");
-        this->declare_parameter<bool>("show2");
-
-        this->declare_parameter<float>("robotFrontEnd");
-        this->declare_parameter<float>("robotRearEnd");
-        this->declare_parameter<float>("robotRightEnd");
-        this->declare_parameter<float>("robotLeftEnd");
-    }
     void refresh_params(){
-        this->get_parameter_or<std::string>("integratedTopic", integratedTopic_, "integrated_scan");
-        this->get_parameter_or<std::string>("integratedFrameId", integratedFrameId_, "laser");
-        this->get_parameter_or<std::string>("scanTopic1",topic1_ ,"scan1");
-        this->get_parameter_or<float>("laser1XOff",laser1XOff_, 0.0);
-        this->get_parameter_or<float>("laser1YOff",laser1YOff_, 0.0);
-        this->get_parameter_or<float>("laser1Yaw",laser1Yaw_, 0.0);
-        this->get_parameter_or<bool>("show1",show1_, true);
-        this->get_parameter_or<std::string>("scanTopic2",topic2_, "scan2");
-        this->get_parameter_or<float>("laser2XOff",laser2XOff_, 0.0);
-        this->get_parameter_or<float>("laser2YOff",laser2YOff_, 0.0);
-        this->get_parameter_or<float>("laser2Yaw",laser2Yaw_, 0.0);
-        this->get_parameter_or<bool>("show2",show2_, true);
-
-        this->get_parameter_or<float>("robotFrontEnd", robotFrontEnd_, 0.0);
-        this->get_parameter_or<float>("robotRearEnd", robotRearEnd_, 0.0);
-        this->get_parameter_or<float>("robotRightEnd", robotRightEnd_, 0.0);
-        this->get_parameter_or<float>("robotLeftEnd", robotLeftEnd_, 0.0);      
+        this->get_parameter("integratedTopic", integratedTopic_);
+        this->get_parameter("integratedFrameId", integratedFrameId_);
+        this->get_parameter("scanTopic1", topic1_);
+        this->get_parameter("laser1XOff", laser1XOff_);
+        this->get_parameter("laser1YOff", laser1YOff_);
+        this->get_parameter("laser1Yaw", laser1Yaw_);
+        this->get_parameter("show1", show1_);
+        this->get_parameter("scanTopic2", topic2_);
+        this->get_parameter("laser2XOff", laser2XOff_);
+        this->get_parameter("laser2YOff", laser2YOff_);
+        this->get_parameter("laser2Yaw", laser2Yaw_);
+        this->get_parameter("show2", show2_);
+        this->get_parameter("robotFrontEnd", robotFrontEnd_);
+        this->get_parameter("robotRearEnd", robotRearEnd_);
+        this->get_parameter("robotRightEnd", robotRightEnd_);
+        this->get_parameter("robotLeftEnd", robotLeftEnd_);
     }
     
     std::string topic1_, topic2_, integratedTopic_, integratedFrameId_;
     bool show1_, show2_;
     float laser1XOff_, laser1YOff_, laser1Yaw_;
-
     float laser2XOff_, laser2YOff_, laser2Yaw_;
-
     float robotFrontEnd_, robotRearEnd_, robotRightEnd_, robotLeftEnd_;
 
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub1_;
@@ -337,8 +264,14 @@ class scanMerger : public rclcpp::Node
 
 int main(int argc, char * argv[]){
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<scanMerger>());
+    
+    // NodeOptions를 사용하여 use_sim_time 파라미터를 자동으로 처리
+    rclcpp::NodeOptions options;
+    options.automatically_declare_parameters_from_overrides(true);
+    
+    auto node = std::make_shared<scanMerger>(options);
+    
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }
-

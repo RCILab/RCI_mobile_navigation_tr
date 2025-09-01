@@ -40,23 +40,23 @@ include_directories(include)
 set(DEPENDENCIES
 	"rclcpp"
   "rcutils"
-	"std_msgs"	
+	"std_msgs"
   "nlohmann_json"
   "tr_driver_msgs"
   "sensor_msgs"
   "trajectory_msgs"
 )
 
-add_executable(driving_motor_node src/main.cpp src/driving_motor.cpp) 
+add_executable(driving_motor_node src/main.cpp src/driving_motor.cpp)
 ament_target_dependencies(driving_motor_node ${DEPENDENCIES} )
 target_link_libraries(driving_motor_node ${LIBLELY_COAPP_LIBRARIES})
 
-# add_executable(operator_motor_node src/main.cpp src/operator_motor.cpp) 
+# add_executable(operator_motor_node src/main.cpp src/operator_motor.cpp)
 # ament_target_dependencies(operator_motor_node ${DEPENDENCIES})
 # target_link_libraries(operator_motor_node ${LIBLELY_COAPP_LIBRARIES})
 
 install(
-  TARGETS 
+  TARGETS
   driving_motor_node
   # operator_motor_node
   DESTINATION lib/${PROJECT_NAME})

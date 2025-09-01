@@ -3,21 +3,11 @@
 <package format="3">
   <name>tr_description</name>
   <version>0.0.0</version>
-  <description>T-Robotics AMR Description</description>
-  <maintainer email="doumpork@khu.ac.kr">Daum Park</maintainer>
-  <license>MIT</license>
+  <description>TODO: Package description</description>
+  <maintainer email="rotal@todo.todo">rotal</maintainer>
+  <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <exec_depend>launch_ros</exec_depend>
-  <exec_depend>navigation2</exec_depend>
-  <exec_depend>slam_toolbox</exec_depend>
-  <exec_depend>gazebo_ros</exec_depend>
-  <exec_depend>controller_manager</exec_depend>
-  <exec_depend>gazebo_ros2_control</exec_depend>
-  <exec_depend>ros2_control</exec_depend>
-  <exec_depend>ros2_controllers</exec_depend>
-  <exec_depend>robotiq_description</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

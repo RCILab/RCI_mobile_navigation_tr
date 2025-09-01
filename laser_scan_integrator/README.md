@@ -16,7 +16,7 @@ The features of this package are below:
 3. RVIZ2
 4. RQT
 
-## How to use
+## How to use 
 1. Clone the repo to your ros2 workspace
 ```bash
 git clone https://github.com/hijimasa/laser_scan_integrator.git

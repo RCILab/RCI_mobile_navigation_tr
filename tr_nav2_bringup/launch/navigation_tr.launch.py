@@ -17,12 +17,10 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable, GroupAction
+from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
-from launch_ros.actions import LoadComposableNodes
-from launch_ros.descriptions import ComposableNode
 from nav2_common.launch import RewrittenYaml
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -31,20 +29,19 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('tr_nav2_bringup')
-
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
     use_multi_robots = LaunchConfiguration('use_multi_robots')
-    use_rviz = LaunchConfiguration('use_rviz')    
-
+    use_rviz = LaunchConfiguration('use_rviz')
 
     lifecycle_nodes = ['controller_server',
                        'planner_server',
                        'behavior_server',
                        'bt_navigator',
-                       'waypoint_follower']
+                       'waypoint_follower',
+                        ]
 
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static'),
@@ -58,6 +55,7 @@ def generate_launch_description():
             source_file=params_file,
             root_key=namespace,
             param_rewrites=param_substitutions,
+
             convert_types=True)
 
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -82,16 +80,6 @@ def generate_launch_description():
     declare_use_multi_robots_cmd =  DeclareLaunchArgument(
         'use_multi_robots', default_value='False',
         description='A flag to remove the remappings')
-    
-    # launch_rviz = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(bringup_dir, 'launch', 'rviz_launch.py')
-    #     ),
-    #     condition = IfCondition(use_rviz),
-    #     launch_arguments={
-    #         'use_sim_time': use_sim_time,
-    #         'namespace': namespace}.items(),
-    # )
 
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_multi_robots])),
@@ -151,71 +139,6 @@ def generate_launch_description():
         ]
     )
 
-    load_nodes_multi_robot = GroupAction(
-        condition=IfCondition(use_multi_robots),
-        actions=[
-            Node(
-                package='nav2_controller',
-                executable='controller_server',
-                output='screen',
-                parameters=[configured_params]),
-            Node(
-                package='nav2_planner',
-                executable='planner_server',
-                name='planner_server',
-                output='screen',
-                parameters=[configured_params]),
-            Node(
-                package='nav2_behaviors',
-                executable='behavior_server',
-                name='behavior_server',
-                output='screen',
-                parameters=[configured_params]),
-            Node(
-                package='nav2_bt_navigator',
-                executable='bt_navigator',
-                name='bt_navigator',
-                output='screen',
-                parameters=[configured_params]),
-            Node(
-                package='nav2_waypoint_follower',
-                executable='waypoint_follower',
-                name='waypoint_follower',
-                output='screen',
-                parameters=[configured_params]),
-            Node(
-                package='nav2_velocity_smoother',
-                executable='velocity_smoother',
-                name='velocity_smoother',
-                output='screen',
-                # respawn=use_respawn,
-                respawn_delay=2.0,
-                parameters=[configured_params],
-                # arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings
-                + [('cmd_vel', 'cmd_vel_nav')],
-            ),
-            Node(
-                package='nav2_lifecycle_manager',
-                executable='lifecycle_manager',
-                name='lifecycle_manager_navigation',
-                output='screen',
-                parameters=[{'use_sim_time': use_sim_time},
-                            {'autostart': autostart},
-                            {'node_names': lifecycle_nodes}]),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(bringup_dir, 'launch', 'rviz_launch.py')
-                ),
-                condition = IfCondition(use_rviz),
-                launch_arguments={
-                    'use_sim_time': use_sim_time,
-                    'namespace': namespace
-                }.items(),
-            ),
-        ]
-    )
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -228,6 +151,5 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(load_nodes)
-    ld.add_action(load_nodes_multi_robot)
 
     return ld

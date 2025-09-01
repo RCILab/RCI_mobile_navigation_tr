@@ -6,17 +6,23 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
 
 def generate_launch_description():
+    declare_use_speed_zone_arg = DeclareLaunchArgument(
+        'use_speed_zone',
+        default_value='True',
+        description='Set to "False" to disable the speed limit zones.'
+    )
     declare_map_name_arg = DeclareLaunchArgument(
         'map_name',
-        default_value='corridor',
+        default_value='fac_final',
         description='Name of the map file in tr_real/maps directory (without .yaml extension)'
     )
 
+    use_speed_zone = LaunchConfiguration('use_speed_zone')
     map_name = LaunchConfiguration('map_name')
 
     map_dir = [
@@ -44,15 +50,17 @@ def generate_launch_description():
             param_file_name))
 
     nav2_launch_file_dir = os.path.join(get_package_share_directory('tr_nav2_bringup'), 'launch')
-    merge_launch_file_dir = os.path.join(get_package_share_directory('laser_scan_integrator'), 'launch')
+    real_launch_file_dir = os.path.join(get_package_share_directory('tr_real'), 'launch')
+
 
     return LaunchDescription([
-        # 위에서 선언한 'map_name' 인자를 런치 설명에 추가합니다.
+        declare_use_speed_zone_arg,
         declare_map_name_arg,
+
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([nav2_launch_file_dir, '/localization_amcl.launch.py']),
             launch_arguments={
-                'map': map_dir, # 동적으로 생성된 맵 경로를 전달합니다.
+                'map': map_dir,
                 'use_sim_time': use_sim_time,
                 'use_multi_robots': use_multi_robots,
                 'params_file': param_dir,
@@ -65,6 +73,8 @@ def generate_launch_description():
                               'params_file': param_dir,
                               'use_rviz': use_rviz}.items()),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([merge_launch_file_dir, '/integrate_2_scan.launch.py']),
-        ),
+            PythonLaunchDescriptionSource([real_launch_file_dir, '/speed_limit.launch.py']),
+            condition=IfCondition(use_speed_zone),
+            launch_arguments={'namespace': namespace,
+                              'use_sim_time': use_sim_time}.items()),
     ])

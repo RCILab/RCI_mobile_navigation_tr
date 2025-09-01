@@ -1,0 +1,7 @@
+image: warehouse_sm.pgm
+mode: scale
+resolution: 0.02
+origin: [-9.07, -9.64, 0]
+negate: 0
+occupied_thresh: 1.0
+free_thresh: 0.0

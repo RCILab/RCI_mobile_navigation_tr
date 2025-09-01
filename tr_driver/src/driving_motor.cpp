@@ -1,9 +1,8 @@
 #include "driving_motor.hpp"
 #include <lely/util/diag.h>
-#include <cmath> // M_PI와 같은 수학 상수 사용을 위해 추가
-#include <trajectory_msgs/msg/joint_trajectory.hpp> // JointTrajectory 메시지 사용을 위해 추가
+#include <cmath>
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
 
-// Lely 라이브러리 로그 핸들러 (기존과 동일)
 void lelyLogHandler(void * /*handle*/, enum diag_severity severity, int /*errc*/,
                     const char *format, va_list ap)
 {
@@ -16,7 +15,6 @@ void lelyLogHandler(void * /*handle*/, enum diag_severity severity, int /*errc*/
     std::cerr << "[LELY][" << severity << "] " << buffer << std::endl;
 }
 
-// 생성자: 구독자 및 발행자 설정
 DrivingMotorsCanOpen::DrivingMotorsCanOpen() : Node("driving_motor")
 {
     logWrite(LOG_INFO, "driving_motor node is started");
@@ -33,14 +31,12 @@ DrivingMotorsCanOpen::DrivingMotorsCanOpen() : Node("driving_motor")
         std::chrono::milliseconds(10),
         std::bind(&DrivingMotorsCanOpen::publishJointStateCallback, this));
 
-    // JointTrajectory 메시지를 구독하도록 수정
     joint_trajectory_sub_ = this->create_subscription<trajectory_msgs::msg::JointTrajectory>(
-        joint_trajectory_topic_, // 파라미터로 받은 토픽 이름 사용
+        joint_trajectory_topic_,
         10,
         std::bind(&DrivingMotorsCanOpen::jointTrajectoryCallback, this, _1));
 }
 
-// 소멸자 (기존과 동일)
 DrivingMotorsCanOpen::~DrivingMotorsCanOpen()
 {
     if (canopen_thread_.joinable())
@@ -49,7 +45,6 @@ DrivingMotorsCanOpen::~DrivingMotorsCanOpen()
     }
 }
 
-// 파라미터 선언: 모터 사양을 기본값으로 반영
 void DrivingMotorsCanOpen::declareParameters()
 {
     RCLCPP_INFO(get_logger(), "driving_motor_node declareParameters starts! ");
@@ -57,14 +52,12 @@ void DrivingMotorsCanOpen::declareParameters()
     this->declare_parameter("can_interface", "can0");
     this->declare_parameter("dcf_path", "");
     this->declare_parameter("num_driver", 1);
-    // 제공된 모터 사양을 기본값으로 설정
     this->declare_parameter("gear_ratio", 20.0);
     this->declare_parameter("ticks_per_revolution", 65536.0);
     this->declare_parameter("joint_trajectory_topic", "drives/joint_trajectory");
     RCLCPP_INFO(get_logger(), "driving_motor_node declareParameters finished! ");
 }
 
-// 파라미터 읽기: 단위 변환에 필요한 파라미터 추가
 void DrivingMotorsCanOpen::getParameters()
 {
     RCLCPP_INFO(get_logger(), "driving_motor_node getParameters starts! ");
@@ -72,7 +65,6 @@ void DrivingMotorsCanOpen::getParameters()
     this->get_parameter<std::string>("can_interface", can_interface_);
     this->get_parameter<std::string>("dcf_path", dcf_path_);
     this->get_parameter<int>("num_driver", num_driver);
-    // 단위 변환에 필요한 파라미터 읽기
     this->get_parameter<double>("gear_ratio", gear_ratio_);
     this->get_parameter<double>("ticks_per_revolution", ticks_per_revolution_);
     this->get_parameter<std::string>("joint_trajectory_topic", joint_trajectory_topic_);
@@ -87,7 +79,6 @@ void DrivingMotorsCanOpen::getParameters()
     RCLCPP_INFO(get_logger(), "driving_motor_node getParameters finished! ");
 }
 
-// JointTrajectory 콜백 함수: 수신된 속도 명령 처리
 void DrivingMotorsCanOpen::jointTrajectoryCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg)
 {
     if (!init_done_ || msg->points.empty())
@@ -106,14 +97,11 @@ void DrivingMotorsCanOpen::jointTrajectoryCallback(const trajectory_msgs::msg::J
             continue;
         }
 
-        const double velocity_rad_s = point.velocities[i]; // rad/s 단위의 목표 속도
+        const double velocity_rad_s = point.velocities[i];
 
-        // 1. 단위를 rad/s에서 RPM으로 변환합니다.
-        //    (rad/s -> 초당 회전수 -> 분당 회전수) * 기어비
         const double TWO_PI = 2.0 * M_PI;
         double target_rpm = (velocity_rad_s / TWO_PI) * 60.0 * gear_ratio_;
 
-        // 2. 변환된 RPM 값을 모터 드라이버에 전달합니다.
         if (joint_name == "wheel_left_joint")
         {
             int driver_idx = 0;
@@ -121,7 +109,6 @@ void DrivingMotorsCanOpen::jointTrajectoryCallback(const trajectory_msgs::msg::J
 
             if (driver_idx < num_driver)
             {
-                // 변환된 RPM 값을 정수형으로 캐스팅하여 전달
                 drivers[driver_idx]->motor_control_.target_vel[motor_idx] = static_cast<int32_t>(target_rpm);
                 drivers[driver_idx]->motor_control_.set_vel_pos[motor_idx] = true;
             }
@@ -133,7 +120,6 @@ void DrivingMotorsCanOpen::jointTrajectoryCallback(const trajectory_msgs::msg::J
 
             if (driver_idx < num_driver)
             {
-                // 변환된 RPM 값을 정수형으로 캐스팅하여 전달
                 drivers[driver_idx]->motor_control_.target_vel[motor_idx] = static_cast<int32_t>(target_rpm);
                 drivers[driver_idx]->motor_control_.set_vel_pos[motor_idx] = true;
             }
@@ -141,7 +127,6 @@ void DrivingMotorsCanOpen::jointTrajectoryCallback(const trajectory_msgs::msg::J
     }
 }
 
-// JointState 발행 콜백 함수: 단위 변환 로직 포함
 void DrivingMotorsCanOpen::publishJointStateCallback()
 {
     if (!init_done_)
@@ -156,8 +141,6 @@ void DrivingMotorsCanOpen::publishJointStateCallback()
     {
         for (int j = 0; j < 2; ++j)
         {
-            // TODO: 발행되는 조인트 이름이 키네마틱스 노드와 일치하는지 확인하세요.
-            // 현재는 "wheel_left_joint", "wheel_right_joint"로 가정합니다.
             if (j == 0) joint_state_msg->name.push_back("wheel_left_joint");
             else        joint_state_msg->name.push_back("wheel_right_joint");
 
@@ -165,10 +148,8 @@ void DrivingMotorsCanOpen::publishJointStateCallback()
             double raw_pos_ticks = drivers[i]->motor_status_.feedback_pos[j];
             double raw_vel_rpm = drivers[i]->motor_status_.feedback_vel[j];
 
-            // 1. Position: Ticks -> Radians
             double position_rad = (raw_pos_ticks / ticks_per_revolution_) * TWO_PI / gear_ratio_;
 
-            // 2. Velocity: RPM -> rad/s
             double velocity_rad_s = (raw_vel_rpm * TWO_PI / 60.0) / gear_ratio_;
 
             joint_state_msg->position.push_back(position_rad);

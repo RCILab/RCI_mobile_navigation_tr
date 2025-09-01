@@ -1,0 +1,33 @@
+ekf_localization:
+  ros__parameters:
+    # GENERAL SETTINGS
+    frequency: 200.0
+    two_d_mode: true
+    predict_to_current_time: true
+
+    # FRAME PARAMETERS
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # ODOMETRY INPUT (from Kinematics)
+    odom0: /odom1
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,  # vx, vy velocity
+                   false, false, true,   # yaw velocity
+                   false, false, false]
+    odom0_differential: false
+    odom0_queue_size: 5
+
+    # IMU INPUT (from IMU sensor)
+    imu0: /gazebo_ros_imu_sensor/out
+    imu0_config: [false, false, false,
+                  true,  true,  true,   # roll, pitch, yaw orientation
+                  false, false, false,
+                  true,  true,  true,   # roll, pitch, yaw angular velocity
+                  false, false, false]
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true
+    imu0_queue_size: 5
