@@ -15,6 +15,8 @@ sudo apt-get update && sudo apt-get install -y \
     ros-humble-navigation2 \
     ros-humble-slam-toolbox \
     ros-humble-robot-state-publisher \
+    ros-humble-ros2-control \
+    ros-humble-ros2-controllers \
     ros-humble-gazebo-ros2-control \
     ros-humble-gazebo-plugins \
     ros-humble-xacro \
